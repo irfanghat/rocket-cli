@@ -1,0 +1,45 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  code-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Install Tarpaulin
+      run: cargo install cargo-tarpaulin
+      working-directory: ./
+
+    - name: Run tests with coverage
+      run: cargo tarpaulin --out Xml
+      working-directory: ./
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: ./tarpaulin-report.xml
+
+    # Publish to [Codecov]
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        # files: ./tarpaulin-report.xml
+        # flags: unittests
+        # name: codecov-umbrella
+        # fail_ci_if_error: true

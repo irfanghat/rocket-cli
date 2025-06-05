@@ -1,0 +1,60 @@
+name: Publish to crates.io
+
+'on':
+  push:
+    branches: [ "master" ]
+    tags: '*'
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Extract current version
+        id: extract_version
+        run: |
+          current_version=$(grep '^version' Cargo.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "current_version=${current_version}" >> $GITHUB_ENV
+        working-directory: ./
+
+      - name: Get latest published version
+        id: get_latest_version
+        run: |
+          crate_name=$(grep '^name' Cargo.toml | sed -E 's/name = "(.*)"/\1/')
+          latest_version=$(curl -s https://crates.io/api/v1/crates/${crate_name} | jq -r .crate.max_version)
+          echo "latest_version=${latest_version}" >> $GITHUB_ENV
+        working-directory: ./
+
+      - name: Compare versions
+        id: compare_versions
+        run: |
+          if [ "${{ env.current_version }}" == "${{ env.latest_version }}" ]; then
+            echo "Version is already published."
+            echo "should_publish=false" >> $GITHUB_ENV
+          else
+            echo "New version detected."
+            echo "should_publish=true" >> $GITHUB_ENV
+          fi
+        working-directory: ./
+
+      - name: Publish to crates.io
+        if: env.should_publish == 'true'
+        run: 'cargo publish --token ${CRATES_IO_TOKEN}'
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: ./
+
+      - name: Skip publishing
+        if: env.should_publish == 'false'
+        run: echo "Skipping publish as the version is already up to date."
+        working-directory: ./

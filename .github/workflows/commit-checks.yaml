@@ -1,0 +1,34 @@
+name: 'Commit Message Check'
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  check-commit-message:
+    name: Check Commit Message
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR Commits
+        id: 'get-pr-commits'
+        uses: tim-actions/get-pr-commits@master
+        with:
+          token: ${{ secrets.WORKFLOW_ACTIONS_CREDENTIAL }}
+
+      - name: Check Subject Line Length
+        uses: tim-actions/commit-message-checker-with-regex@v0.3.1
+        with:
+          commits: ${{ steps.get-pr-commits.outputs.commits }}
+          pattern: '^.{0,100}(\n.*)*$'
+          error: 'Subject too long (max 100)'
+
+      - name: Check Body Line Length
+        if: ${{ success() || failure() }}
+        uses: tim-actions/commit-message-checker-with-regex@v0.3.1
+        with:
+          commits: ${{ steps.get-pr-commits.outputs.commits }}
+          pattern: '^.+(\n.{0,100})*$'
+          error: 'Body line too long (max 100)'
