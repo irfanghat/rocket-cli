@@ -28,8 +28,9 @@ impl Fairing for Cors {
 pub const AUTH_GUARD: &str = r#"use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
-use crate::middleware::validate_token;
+use crate::auth::validate_token;
 
+#[allow(dead_code)]
 pub struct AuthClaims {
     pub credentials: String,
 }
@@ -40,12 +41,12 @@ impl<'r> FromRequest<'r> for AuthClaims {
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let cookie = req.cookies().get("auth_token");
-        
+
         match cookie {
             Some(c) => match validate_token(c.value()).await {
                 Ok(credentials) => Outcome::Success(AuthClaims { credentials }),
-                Err(err_msg) => {
-                    Outcome::Error((Status::Unauthorized, AuthError::InvalidToken(err_msg)))
+                Err(_) => {
+                    Outcome::Error((Status::Unauthorized, AuthError::InvalidToken(())))
                 }
             },
             None => Outcome::Error((Status::Unauthorized, AuthError::MissingToken)),
@@ -56,39 +57,13 @@ impl<'r> FromRequest<'r> for AuthClaims {
 #[derive(Debug)]
 pub enum AuthError {
     MissingToken,
-    InvalidToken(String),
-}"#;
-
-pub const MIDDLEWARE: &str = r#"pub async fn validate_token(token: &str) -> Result<String, String> {
-    let auth_key = std::env::var("AUTH_KEY")
-        .map_err(|_| "AUTH_KEY must be set".to_string())?;
-
-    let mut validation = Validation::new(Algorithm::HS256);
-    validation.set_audience(&["your-audience"]);
-
-    let mut iss_set = HashSet::new();
-    iss_set.insert("your-issuer".to_string());
-    validation.iss = Some(iss_set);
-
-    let decoded = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(auth_key.as_bytes()),
-        &validation,
-    )
-    .map_err(|e| match e.kind() {
-        ErrorKind::ExpiredSignature => "Token expired".to_string(),
-        ErrorKind::InvalidToken => "Invalid token".to_string(),
-        _ => format!("Token error: {}", e),
-    })?;
-
-    Ok(decoded.claims.sub)
+    InvalidToken(()),
 }
 "#;
 
-pub const BASIC_AUTH: &str = r#"use crate::{
-    guards::AuthClaims,
-    models::{LoginCredentials, User},
-};
+pub const MIDDLEWARE: &str = r#"/* Middleware goes here */"#;
+
+pub const BASIC_AUTH: &str = r#"use crate::models::{LoginCredentials, User};
 
 use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::{Duration, Utc};
@@ -99,16 +74,16 @@ use jsonwebtoken::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 /// JWT claims structure, including subject, expiration, and unique nonce.
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
-    sub: String,        // Subject (user email)
-    exp: usize,         // Expiration timestamp
-    nonce: String,      // Unique secret marker
-    aud: Vec<String>,   // Audience restriction
-    iss: String,        // Issuer restriction
+    sub: String,      // Subject (user email)
+    exp: usize,       // Expiration timestamp
+    nonce: String,    // Unique secret marker
+    aud: Vec<String>, // Audience restriction
+    iss: String,      // Issuer restriction
 }
 
 /// Authorizes a user by verifying credentials and generating a JWT.
@@ -158,13 +133,77 @@ pub async fn authorize_user(user: &User, credentials: &LoginCredentials) -> Resu
 pub fn hash_password(password: String) -> Result<String, String> {
     hash(password, DEFAULT_COST).map_err(|e| e.to_string())
 }
+
+/// Validates session JWTs
+pub async fn validate_token(token: &str) -> Result<String, String> {
+    let auth_key = std::env::var("AUTH_KEY").map_err(|_| "AUTH_KEY must be set".to_string())?;
+
+    let mut validation = Validation::new(Algorithm::HS256);
+    validation.set_audience(&["your-audience"]);
+
+    let mut iss_set = HashSet::new();
+    iss_set.insert("your-issuer".to_string());
+    validation.iss = Some(iss_set);
+
+    let decoded = decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(auth_key.as_bytes()),
+        &validation,
+    )
+    .map_err(|e| match e.kind() {
+        ErrorKind::ExpiredSignature => "Token expired".to_string(),
+        ErrorKind::InvalidToken => "Invalid token".to_string(),
+        _ => format!("Token error: {}", e),
+    })?;
+
+    Ok(decoded.claims.sub)
+}
 "#;
 
 pub const GITIGNORE: &str = r#"/target
 .env
 "#;
 
-pub const ENV: &str = r#"
+pub const ENV: &str = r#"# -------------------------------------------------------------------------
+# Smaple values
+#
+# [Mongo DB]
+# DATABASE_URL=mongodb+srv://<username>:<your-password><your-cluster>.<unique_id>.mongodb.net/?retryWrites=true&w=majority&appName=YourCluster
+# DATABASE=database_name
+#
+# 
+# [PostgreSQL]
+# DATABASE_URL="postgres://username:password@host:port/database_name?sslmode=require"
+# DATABASE=database_name
+#
+#
+# DATABASE_URL="postgresql://username:password@localhost:5432/your_database"
+# DATABASE=database_name
+#
+#
+# [MySQL]
+# DATABASE_URL="mysql://username:password@host:port/database_name"
+# DATABASE_URL="mysql://root:password@localhost:3306/your_database"
+# DATABASE=database_name
+#
+#
+# [MS SQL Server]
+# DATABASE_URL="mssql://username:password@host:port/database_name"
+# DATABASE_URL="mssql://username:password@localhost:1433/your_database"
+# DATABASE_URL="mssql://username:password@host\\instance_name/database_name" # For named instances
+# DATABASE=database_name
+#
+# 
+# [SQLite]
+# DATABASE_URL="sqlite://./path/to/your/database.db"
+# DATABASE_URL="sqlite://./data/app.db" # Example for a database file in a 'data' folder
+#
+#
+# Hex value, can be generated via Open SSL cli or random keygen
+# AUTH_KEY=qaZxSwefcdVfrtgbHy6HnJUjnmJUikmlo=
+# -----------------------------------------------------------
+
+
 DATABASE_URL=
 DATABASE=
 AUTH_KEY=

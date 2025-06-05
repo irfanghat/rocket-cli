@@ -4,16 +4,32 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+argon2 = "0.5.3"
+bcrypt = "0.16.0"
+bson = { version = "2.13.0", features = ["chrono-0_4"] }
+chrono = { version = "0.4.39", features = ["serde"] }
+dotenvy = "0.15.7"
+futures = "0.3.31"
+jsonwebtoken = "9.3.0"
+mongodb = "3.1.1"
+rand = "0.8.5"
+regex = "1.11.1"
 rocket = { version = "0.5.1", features = ["json"] }
+schemars = "0.8.21"
+serde = { version = "1.0.216", features = ["derive"] }
+tokio = { version = "1.42.0", features = ["full"] }
+sha2 = "0.10.8"
 "#;
 
 pub const MAIN_RS: &str = r#"#[macro_use] 
 extern crate rocket;
 
+mod auth;
 mod catchers;
 mod db;
 mod fairings;
 mod guards;
+mod middleware;
 mod models;
 mod options;
 mod repositories;
@@ -23,28 +39,29 @@ mod routes;
 fn rocket() -> _ {
     rocket::build()
         .attach(db::init())
-        .attach(fairings::cors)
-         .register(
+        .attach(fairings::Cors)
+        .register(
             "/",
             catchers![
-                bad_request,
-                unauthorized,
-                forbidden,
-                not_found,
-                method_not_allowed,
-                request_timeout,
-                conflict,
-                payload_too_large,
-                unsupported_media_type,
-                teapot,
-                too_many_requests,
-                internal_error,
-                bad_gateway,
-                service_unavailable,
-                gateway_timeout
+                catchers::bad_request,
+                catchers::unauthorized,
+                catchers::forbidden,
+                catchers::not_found,
+                catchers::method_not_allowed,
+                catchers::request_timeout,
+                catchers::conflict,
+                catchers::payload_too_large,
+                catchers::unsupported_media_type,
+                catchers::teapot,
+                catchers::too_many_requests,
+                catchers::internal_error,
+                catchers::bad_gateway,
+                catchers::service_unavailable,
+                catchers::gateway_timeout
             ],
         )
-        .mount("/", routes::routes())
+        .mount("/", routes![options::options])
+        .mount("/", routes::user_routes())
 }
 "#;
 
@@ -128,7 +145,6 @@ pub async fn gateway_timeout() -> &'static str {
 
 pub const MODELS: &str = r#"use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
-use rocket::response::Responder;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -200,17 +216,15 @@ pub async fn options(_route_args: Option<std::path::PathBuf>) -> rocket::http::S
 }
 "#;
 
-pub const ROUTES_MOD: &str = r#"use crate::guards::AuthClaims;
+pub const ROUTES_MOD: &str = r#"use crate::auth::{authorize_user, hash_password};
+use crate::guards::AuthClaims;
 use crate::models::{ErrorResponse, SuccessResponse, UserInfo};
 use crate::models::{LoginCredentials, RegistrationCredentials, User, UserDocument};
-use crate::repositories::users::UserRepository;
-use crate::auth::{authorize_user, hash_password};
+use crate::repositories::UserRepository;
 
 use rocket::http::Status;
 use rocket::http::{Cookie, CookieJar, SameSite};
-use rocket::response::Responder;
-use rocket::response::status::Custom;
-use rocket::serde::{Deserialize, json::Json};
+use rocket::serde::json::Json;
 use rocket::{State, delete, get, post, put, routes};
 
 use std::sync::Arc;
@@ -238,7 +252,7 @@ pub async fn register(
         }
     };
 
-    let user = match repo
+    let _ = match repo
         .create_user(&credentials.username, &credentials.email, &hashed_password)
         .await
     {
@@ -299,7 +313,8 @@ pub async fn login(
     };
 
     // Set the token cookie (HTTP-only, secure)
-    let mut cookie = Cookie::build(("auth_token", token.clone()))
+    #[allow(deprecated)]
+    let cookie = Cookie::build(("auth_token", token.clone()))
         .http_only(true)
         .secure(false) // Ensure your app uses HTTPS
         .same_site(SameSite::Lax)
@@ -324,28 +339,10 @@ pub fn logout(cookies: &CookieJar<'_>) -> Json<SuccessResponse> {
     })
 }
 
-/// Retrieves a list of all users.
-#[get("/users")]
-pub async fn list_users(
-    repo: &State<Arc<UserRepository>>,
-) -> Result<Json<Vec<UserDocument>>, Json<ErrorResponse>> {
-    let users = match repo.list_users().await {
-        Ok(users) => users,
-        Err(_) => {
-            return Err(Json(ErrorResponse {
-                status: Status::InternalServerError.code,
-                message: "Something went wrong, please try again later".to_string(),
-            }));
-        }
-    };
-
-    Ok(Json(users))
-}
-
 /// Retrieves a single user by ID (requires authentication).
 #[get("/users/<id>")]
 pub async fn get_user(
-    auth: AuthClaims,
+    _auth: AuthClaims,
     repo: &State<Arc<UserRepository>>,
     id: &str,
 ) -> Result<Json<UserDocument>, Json<ErrorResponse>> {
@@ -371,7 +368,7 @@ pub async fn get_user(
 /// Retrieves a single user by email (requires authentication).
 #[get("/user/<email>")]
 pub async fn get_user_by_email(
-    auth: AuthClaims,
+    _auth: AuthClaims,
     repo: &State<Arc<UserRepository>>,
     email: &str,
 ) -> Result<Json<UserInfo>, Json<ErrorResponse>> {
@@ -402,7 +399,7 @@ pub async fn get_user_by_email(
 /// Updates an existing user's information by ID (requires authentication).
 #[put("/update/<id>", data = "<credentials>")]
 pub async fn update_user(
-    auth: AuthClaims,
+    _auth: AuthClaims,
     repo: &State<Arc<UserRepository>>,
     id: &str,
     credentials: Json<RegistrationCredentials>,
@@ -458,7 +455,7 @@ pub async fn update_user(
 /// Deletes a user by ID (requires authentication).
 #[delete("/delete/<id>")]
 pub async fn delete_user(
-    auth: AuthClaims,
+    _auth: AuthClaims,
     repo: &State<Arc<UserRepository>>,
     id: &str,
 ) -> Result<Json<SuccessResponse>, Json<ErrorResponse>> {
@@ -497,11 +494,11 @@ pub fn user_routes() -> Vec<rocket::Route> {
 "#;
 
 pub const DB: &str = r#"use dotenvy::dotenv;
-use mongodb::{Client, Database, options::ClientOptions};
+use mongodb::{Client, options::ClientOptions};
 use rocket::fairing::AdHoc;
-use std::{env, sync::Arc};
+use std::sync::Arc;
 
-use crate::repositories::users::UserRepository;
+use crate::repositories::UserRepository;
 
 pub fn init() -> AdHoc {
     AdHoc::on_ignite(
@@ -518,13 +515,12 @@ pub fn init() -> AdHoc {
 }
 
 async fn connect() -> mongodb::error::Result<Arc<UserRepository>> {
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set...");
-    let database_name =
-        std::env::var("DATABASE").expect("DATABASE must be set...");
+    dotenv().ok();
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set...");
+    let database_name = std::env::var("DATABASE").expect("DATABASE must be set...");
     let client_options = ClientOptions::parse(database_url).await?;
     let client = Client::with_options(client_options)?;
-    let database = client.database(&database_name);
+    let _database = client.database(&database_name);
 
     Ok(Arc::new(UserRepository::new(
         &client,
@@ -534,13 +530,14 @@ async fn connect() -> mongodb::error::Result<Arc<UserRepository>> {
 }
 "#;
 
-pub const REPOSITORIES: &str = r#"use chrono::{DateTime, Utc};
+pub const REPOSITORIES: &str = r#"#![allow(unused)]
+use chrono::{DateTime, Utc};
 use futures::stream::TryStreamExt;
 use mongodb::{
-    Client, Collection,
     bson::{doc, oid::ObjectId},
     error::{Error, Result},
     options::ClientOptions,
+    Client, Collection,
 };
 use serde::{Deserialize, Serialize};
 
