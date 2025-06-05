@@ -5,7 +5,7 @@ Scaffold production-ready APIs in seconds with idiomatic folder structure and da
 
 ---
 
-## ✨ Features
+## Features
 
 - 🔧 `rocket new` to scaffold new Rocket projects
 - 📦 Multiple templates: `minimal` (default), `mongodb`, `postgres`, `mysql`, `mssql`, `sqlite`, and more via `rbatis`
@@ -16,15 +16,15 @@ Scaffold production-ready APIs in seconds with idiomatic folder structure and da
 
 ---
 
-## 📦 Installation
+## Installation
 
-### 🚀 Option 1: Install via Cargo
+### Install via Cargo
 
 ```bash
 cargo install --path .
 ```
 
-### 🧱 Option 2: Clone & Build Locally
+### Clone & Build Locally
 
 ```bash
 git clone https://github.com/irfanghat/rocket-cli
@@ -32,7 +32,7 @@ cd rocket-cli
 cargo build --release
 ```
 
-### 📥 Option 3: Download Precompiled Binary
+### Download Precompiled Binary
 
 Download the latest binary from [GitHub Releases](https://github.com/irfanghat/rocket-cli/releases):
 
@@ -57,13 +57,13 @@ rocket-cli --version
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ```bash
 rocket-cli <command> [options]
 ```
 
-### 🔨 Create a new project
+### Create a new project
 
 ```bash
 rocket-cli new my-api
@@ -82,7 +82,7 @@ Example:
 rocket-cli new my-api --template postgres --git
 ```
 
-### ▶️ Run your project
+### Run your project
 
 ```bash
 rocket-cli run
@@ -90,7 +90,7 @@ rocket-cli run
 
 ---
 
-## 📁 Project Layout (Standardized)
+## Project Layout (Standardized)
 
 Every template follows a production-grade folder structure:
 
@@ -121,14 +121,14 @@ Supported templates:
 
 ---
 
-## 📘 Documentation
+## Documentation
 
 * 🌐 [Rocket.rs Docs](https://rocket.rs)
 * 💻 [GitHub Repo](https://github.com/irfanghat/rocket-cli)
 
 ---
 
-## 🛠️ Contributing
+## Contributing
 
 Contributions, templates, and suggestions are welcome!
 
@@ -140,7 +140,7 @@ cargo run -- --help
 
 ---
 
-## 🧾 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
 
