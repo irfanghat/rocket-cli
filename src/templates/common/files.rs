@@ -59,6 +59,107 @@ pub enum AuthError {
     InvalidToken(String),
 }"#;
 
+pub const MIDDLEWARE: &str = r#"pub async fn validate_token(token: &str) -> Result<String, String> {
+    let auth_key = std::env::var("AUTH_KEY")
+        .map_err(|_| "AUTH_KEY must be set".to_string())?;
+
+    let mut validation = Validation::new(Algorithm::HS256);
+    validation.set_audience(&["your-audience"]);
+
+    let mut iss_set = HashSet::new();
+    iss_set.insert("your-issuer".to_string());
+    validation.iss = Some(iss_set);
+
+    let decoded = decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(auth_key.as_bytes()),
+        &validation,
+    )
+    .map_err(|e| match e.kind() {
+        ErrorKind::ExpiredSignature => "Token expired".to_string(),
+        ErrorKind::InvalidToken => "Invalid token".to_string(),
+        _ => format!("Token error: {}", e),
+    })?;
+
+    Ok(decoded.claims.sub)
+}
+"#;
+
+pub const BASIC_AUTH: &str = r#"use crate::{
+    guards::AuthClaims,
+    models::{LoginCredentials, User},
+};
+
+use bcrypt::{DEFAULT_COST, hash, verify};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{
+    Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode, errors::ErrorKind,
+};
+
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+
+use std::collections::{HashMap, HashSet};
+
+/// JWT claims structure, including subject, expiration, and unique nonce.
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: String,        // Subject (user email)
+    exp: usize,         // Expiration timestamp
+    nonce: String,      // Unique secret marker
+    aud: Vec<String>,   // Audience restriction
+    iss: String,        // Issuer restriction
+}
+
+/// Authorizes a user by verifying credentials and generating a JWT.
+pub async fn authorize_user(user: &User, credentials: &LoginCredentials) -> Result<String, String> {
+    let auth_key = std::env::var_os("AUTH_KEY")
+        .expect("[AUTH_KEY] must be set...")
+        .into_string()
+        .unwrap();
+
+    // Verify the provided password against the stored hash.
+    if !verify(&credentials.password, &user.password).map_err(|e| e.to_string())? {
+        return Err("Invalid credentials".into());
+    }
+
+    // Generate a unique per-token nonce using user email and secret key.
+    let mut hasher = Sha256::new();
+    hasher.update(format!("{}{}", user.email, auth_key));
+    let nonce = format!("{:x}", hasher.finalize());
+
+    // Set token expiration to 48 hours from now.
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::minutes(2880)) // 2880 minutes = 48 hours
+        .expect("valid timestamp")
+        .timestamp() as usize;
+
+    // Create JWT claims.
+    let claims = Claims {
+        sub: user.email.clone(),
+        exp: expiration,
+        nonce,
+        aud: vec!["".to_string()], // Define your audience
+        iss: "".to_string(),       // Define your issuer
+    };
+
+    // Encode claims into a JWT using HS256 algorithm and the secret key.
+    let token = encode(
+        &Header::new(Algorithm::HS256),
+        &claims,
+        &EncodingKey::from_secret(auth_key.as_ref()),
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(token)
+}
+
+/// Hashes a given password using bcrypt with default cost.
+pub fn hash_password(password: String) -> Result<String, String> {
+    hash(password, DEFAULT_COST).map_err(|e| e.to_string())
+}
+"#;
+
 pub const GITIGNORE: &str = r#"/target
 .env
 "#;
