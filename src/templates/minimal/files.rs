@@ -23,7 +23,7 @@ fn rocket() -> _ {
 "#;
 
 pub const ROUTES_MOD: &str = r#"pub fn routes() -> Vec<rocket::Route> {
-    routes![index]
+    routes![index, hello]
 }
 
 #[get("/")]

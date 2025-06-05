@@ -1,15 +1,14 @@
-pub const CORS: &str = r#"#![allow(non_snake_case)]
-use rocket::fairing::{Fairing, Info, Kind};
+pub const CORS: &str = r#"use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::{Request, Response};
 
-pub struct CORS;
+pub struct cors;
 
 #[rocket::async_trait]
-impl Fairing for CORS {
+impl Fairing for cors {
     fn info(&self) -> Info {
         Info {
-            name: "Add CORS headers to responses",
+            name: "Add cors headers to responses",
             kind: Kind::Response,
         }
     }
@@ -31,12 +30,12 @@ use rocket::request::{FromRequest, Outcome, Request};
 
 use crate::utils::validate_token;
 
-pub struct AuthenticaionClaims {
+pub struct AuthClaims {
     pub credentials: String,
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for AuthenticaionClaims {
+impl<'r> FromRequest<'r> for AuthClaims {
     type Error = AuthError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
@@ -44,7 +43,7 @@ impl<'r> FromRequest<'r> for AuthenticaionClaims {
         
         match cookie {
             Some(c) => match validate_token(c.value()).await {
-                Ok(credentials) => Outcome::Success(AuthenticaionClaims { credentials }),
+                Ok(credentials) => Outcome::Success(AuthClaims { credentials }),
                 Err(err_msg) => {
                     Outcome::Error((Status::Unauthorized, AuthError::InvalidToken(err_msg)))
                 }
