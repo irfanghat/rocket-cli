@@ -8,13 +8,13 @@ use std::path::Path;
 
 pub fn handle(args: NewArgs) {
     if args.list {
-        println!("Available Rocket templates:\n");
+        println!("\nAvailable Rocket templates:\n");
         println!("  minimal     → Basic Rocket project with a single route [default]");
         println!("  mongodb     → Rocket + MongoDB integration");
-        println!("  postgres    → Rocket + PostgreSQL using rbatis");
-        println!("  mysql       → Rocket + MySQL using rbatis");
-        println!("  mssql       → Rocket + SQL Server using rbatis");
-        println!("  sqlite      → Rocket + SQLite using rbatis");
+        println!("  postgres    → Rocket + PostgreSQL");
+        println!("  mysql       → Rocket + MySQL");
+        println!("  mssql       → Rocket + SQL Server");
+        println!("  sqlite      → Rocket + SQLite");
         println!("\nExample: rocket new my-app --template postgres --git");
         return;
     }
@@ -47,7 +47,7 @@ pub fn execute(name: String, git: bool, template: String) {
     }
 
     let template_files = get_template_files(&template).unwrap_or_else(|| {
-        eprintln!("{}", format!("Template '{}' not found", template).red());
+        eprintln!("{}", format!("Rocket Template '{}' not found", template).red());
         std::process::exit(1);
     });
 

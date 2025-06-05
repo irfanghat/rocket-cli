@@ -1,13 +1,13 @@
-use atty::Stream;
 use clap::Parser;
 use colored::*;
 use commands::Command;
+use is_terminal::*;
 
 mod commands;
 mod templates;
 
 #[derive(Parser)]
-#[command(name = "rocket")]
+#[command(name = "rocket-cli")]
 #[command(
     version,
     about = "A command-line interface (CLI) for developing, building and running Rocket Web applications."
@@ -27,7 +27,7 @@ fn main() {
 }
 
 fn print_welcome() {
-    let is_tty = atty::is(Stream::Stdout);
+    let is_tty = std::io::stdout().is_terminal();
 
     let rocket_art = r#"
          .
@@ -72,7 +72,6 @@ fn print_welcome() {
             "https://github.com/irfanghat/rocket-cli".underline()
         );
     } else {
-        // Plain fallback (no ANSI styling)
         println!("{}", rocket_art);
         println!("Usage Examples:");
         println!("  rocket new my-api      Scaffold a new Rocket project");
