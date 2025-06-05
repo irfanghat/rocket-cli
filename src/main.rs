@@ -1,4 +1,5 @@
-use clap::{CommandFactory, Parser};
+use atty::Stream;
+use clap::Parser;
 use colored::*;
 use commands::Command;
 
@@ -26,6 +27,8 @@ fn main() {
 }
 
 fn print_welcome() {
+    let is_tty = atty::is(Stream::Stdout);
+
     let rocket_art = r#"
          .
         / \
@@ -37,35 +40,48 @@ fn print_welcome() {
     |_|     |_|     incredible usability, productivity & performance.
     "#;
 
-    println!("{}", rocket_art.bright_red());
+    if is_tty {
+        println!("{}", rocket_art.bright_red());
+        println!("{}", "Usage Examples:".bold());
+        println!(
+            "  {}      {}",
+            "rocket new my-api".cyan(),
+            "Scaffold a new Rocket project"
+        );
+        println!(
+            "  {}  {}",
+            "rocket new --list".cyan(),
+            "List available templates"
+        );
+        println!(
+            "  {}         {}",
+            "rocket run".cyan(),
+            "Run your Rocket application"
+        );
 
-    println!("{}", "Usage Examples:".bold());
-    println!(
-        "  {}      {}",
-        "rocket new my-api".cyan(),
-        "Scaffold a new Rocket project"
-    );
-    println!(
-        "  {}  {}",
-        "rocket new --list".cyan(),
-        "List available templates"
-    );
-    println!(
-        "  {}         {}",
-        "rocket run".cyan(),
-        "Run your Rocket application"
-    );
+        println!();
+        println!("{}", "Docs & Links:".bold());
+        println!(
+            "  {}     {}",
+            "📘 Docs:".yellow(),
+            "https://rocket.rs".underline()
+        );
+        println!(
+            "  {}  {}",
+            "💻 GitHub:".yellow(),
+            "https://github.com/irfanghat/rocket-cli".underline()
+        );
+    } else {
+        // Plain fallback (no ANSI styling)
+        println!("{}", rocket_art);
+        println!("Usage Examples:");
+        println!("  rocket new my-api      Scaffold a new Rocket project");
+        println!("  rocket new --list      List available templates");
+        println!("  rocket run             Run your Rocket application");
 
-    println!();
-    println!("{}", "Docs & Links:".bold());
-    println!(
-        "  {}     {}",
-        "📘 Docs:".yellow(),
-        "https://rocket.rs".underline()
-    );
-    println!(
-        "  {}  {}",
-        "💻 GitHub:".yellow(),
-        "https://github.com/irfanghat/rocket-cli".underline()
-    );
+        println!();
+        println!("Docs & Links:");
+        println!("  📘 Docs:     https://rocket.rs");
+        println!("  💻 GitHub:   https://github.com/irfanghat/rocket-cli");
+    }
 }

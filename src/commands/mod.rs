@@ -7,7 +7,7 @@ use clap::{Args, Subcommand};
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Create a new Rocket project
+    /// Scaffold a new Rocket project
     New(NewArgs),
 
     /// Run the Rocket application

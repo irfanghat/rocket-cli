@@ -1,30 +1,10 @@
-pub const CARGO_TOML: &str = r#"[package]
-name = "{{project_name}}"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-rocket = { version = "0.5.1", features = ["json"] }
-"#;
-
-pub const MAIN_RS: &str = r#"#[macro_use] 
-extern crate rocket;
-
-mod routes;
-
-#[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes::routes())
-}
-"#;
-
-pub const ROUTES_MOD: &str = r#"pub fn routes() -> Vec<rocket::Route> {
+pub fn routes() -> Vec<rocket::Route> {
     routes![index, hello]
 }
 
 #[get("/")]
 fn index() -> &'static str {
-    "Hello, {{project_name}}!"
+    "Hello, demo!"
 }
 
 /*-----------------------------------------------------------
@@ -38,4 +18,3 @@ Parsing is directed by the FromParam trait. Rocket implements FromParam for many
 fn hello(name: &str, age: u8) -> String {
     format!("Hello, {} year old named {}!", age, name)
 }
-"#;

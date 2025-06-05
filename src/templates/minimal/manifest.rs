@@ -8,7 +8,6 @@ pub fn get_files() -> Vec<(PathBuf, &'static str)> {
         ("src/main.rs".into(), files::MAIN_RS),
         ("src/routes/mod.rs".into(), files::ROUTES_MOD),
         ("src/fairings/mod.rs".into(), common::files::CORS),
-        ("src/guards".into(), common::files::AUTH_GUARD),
         (".gitignore".into(), common::files::GITIGNORE),
         // More files will be added here if needed e.g.
         // db/mod.rs, middleware/logger.rs, etc.

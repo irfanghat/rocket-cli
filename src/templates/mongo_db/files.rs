@@ -7,18 +7,14 @@ edition = "2021"
 rocket = { version = "0.5.1", features = ["json"] }
 "#;
 
-pub const MAIN_RS: &str = r#"#[macro_use] extern crate rocket;
+pub const MAIN_RS: &str = r#"#[macro_use] 
+extern crate rocket;
 
 mod routes;
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, {{project_name}}!"
-}
-
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+    rocket::build().mount("/", routes::routes())
 }
 "#;
 
