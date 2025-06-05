@@ -16,7 +16,9 @@ pub fn get_files() -> Vec<(PathBuf, &'static str)> {
         ("src/models/mod.rs".into(), files::MODELS),
         ("src/auth/mod.rs".into(), common::files::BASIC_AUTH),
         ("src/middleware/mod.rs".into(), common::files::MIDDLEWARE),
+        ("Rocket.toml".into(), common::files::ROCKET_CONFIG),
         (".gitignore".into(), common::files::GITIGNORE),
+        (".env".into(), common::files::ENV),
         // More files will be added here if needed e.g.
         // db/mod.rs, middleware/logger.rs, etc.
         // ...

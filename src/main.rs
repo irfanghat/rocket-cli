@@ -45,17 +45,17 @@ fn print_welcome() {
         println!("{}", "Usage Examples:".bold());
         println!(
             "  {}      {}",
-            "rocket new my-api".cyan(),
+            "rocket-cli new my-api".cyan(),
             "Scaffold a new Rocket project"
         );
         println!(
             "  {}  {}",
-            "rocket new --list".cyan(),
+            "rocket-cli new --list".cyan(),
             "List available templates"
         );
         println!(
             "  {}         {}",
-            "rocket run".cyan(),
+            "rocket-cli run".cyan(),
             "Run your Rocket application"
         );
 
@@ -74,9 +74,9 @@ fn print_welcome() {
     } else {
         println!("{}", rocket_art);
         println!("Usage Examples:");
-        println!("  rocket new my-api      Scaffold a new Rocket project");
-        println!("  rocket new --list      List available templates");
-        println!("  rocket run             Run your Rocket application");
+        println!("  rocket-cli new my-api      Scaffold a new Rocket project");
+        println!("  rocket-cli new --list      List available templates");
+        println!("  rocket-cli run             Run your Rocket application");
 
         println!();
         println!("Docs & Links:");

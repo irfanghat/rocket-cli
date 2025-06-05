@@ -204,7 +204,7 @@ pub const ROUTES_MOD: &str = r#"use crate::guards::AuthClaims;
 use crate::models::{ErrorResponse, SuccessResponse, UserInfo};
 use crate::models::{LoginCredentials, RegistrationCredentials, User, UserDocument};
 use crate::repositories::users::UserRepository;
-use crate::utils::{authorize_user, hash_password};
+use crate::auth::{authorize_user, hash_password};
 
 use rocket::http::Status;
 use rocket::http::{Cookie, CookieJar, SameSite};

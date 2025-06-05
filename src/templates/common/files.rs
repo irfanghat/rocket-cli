@@ -28,7 +28,7 @@ impl Fairing for Cors {
 pub const AUTH_GUARD: &str = r#"use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
-use crate::utils::validate_token;
+use crate::middleware::validate_token;
 
 pub struct AuthClaims {
     pub credentials: String,
@@ -162,4 +162,50 @@ pub fn hash_password(password: String) -> Result<String, String> {
 
 pub const GITIGNORE: &str = r#"/target
 .env
+"#;
+
+pub const ENV: &str = r#"
+DATABASE_URL=
+DATABASE=
+AUTH_KEY=
+"#;
+
+pub const ROCKET_CONFIG: &str = r#"
+[default]
+# Network settings
+address = "0.0.0.0"               # Listen on all network interfaces
+port = 8000                       # Port number
+workers = 16                      # Number of threads for request handling (adjust to number of CPU cores)
+keep_alive = 5                    # Keep-alive timeout in seconds
+max_blocking = 512                # Maximum number of blocking operations allowed simultaneously
+temp_dir = "/tmp"                 # Directory for temporary files
+ident = "Rocket"                  # Server identifier in responses
+
+# Logging and debugging
+log_level = "normal"            # Logging level: "critical", "normal", "debug"
+cli_colors = true                 # Enable CLI colors for local logs
+
+# Security
+ip_header = "X-Real-IP"           # Use reverse proxy header for client IP detection (set to "false" if unused)
+
+# Resource limits
+[default.limits]
+json = 52428800                 # Max size for JSON payloads (10 MB)
+form = 2097152                    # Max size for form submissions (2 MB)
+file = 52428800                   # Max size for uploaded files (50 MB)
+
+# TLS configuration (uncomment and configure for HTTPS)
+[default.tls]
+certs = "/certs/client_cert.pem" # Path to TLS certificate
+key = "/certs/client_key.pem"    # Path to private key
+
+[global]
+# Global overrides for all environments
+address = "0.0.0.0"
+port = 8000
+
+[global.limits]
+json = 52428800
+form = 2097152
+file = 52428800
 "#;
