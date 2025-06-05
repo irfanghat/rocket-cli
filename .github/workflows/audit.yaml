@@ -2,7 +2,7 @@ name: Cargo Audit
 'on':
   push:
     branches:
-      - master
+      - dev
   pull_request:
     branches:
       - master

@@ -12,8 +12,10 @@ pub fn get_files() -> Vec<(PathBuf, &'static str)> {
         ("src/catchers/mod.rs".into(), files::CATACHERS),
         ("src/options/mod.rs".into(), files::OPTIONS),
         ("src/repositories/mod.rs".into(), files::REPOSITORIES),
+        ("src/db/mod.rs".into(), files::DB),
         ("src/models/mod.rs".into(), files::MODELS),
-        ("src/models/mod.rs".into(), common::files::BASIC_AUTH),
+        ("src/auth/mod.rs".into(), common::files::BASIC_AUTH),
+        ("src/middleware/mod.rs".into(), common::files::MIDDLEWARE),
         (".gitignore".into(), common::files::GITIGNORE),
         // More files will be added here if needed e.g.
         // db/mod.rs, middleware/logger.rs, etc.
