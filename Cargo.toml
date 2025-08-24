@@ -2,6 +2,11 @@
 name = "rocket-cli"
 version = "0.0.1"
 edition = "2024"
+license = "MIT"
+repository = "https://github.com/irfanghat/rocket-cli"
+keywords = ["cli", "rocket", "rust", "scaffold", "rbatis", "web"]
+categories = ["command-line-utilities", "web-programming", "development-tools"]
+authors = ["<irfanghat@gmail.com> Irfan Ghat"]
 
 [dependencies]
 clap = { version = "4.5.39", features = ["derive"] }

@@ -1,4 +1,3 @@
-// ==================== cargo.toml ====================
 pub const CARGO_TOML: &str = r#"[package]
 name = "{{project_name}}"
 version = "0.1.0"
@@ -24,7 +23,6 @@ rbdc-pg = "4.6"
 rbs = "4.6"
 "#;
 
-// ==================== main.rs ====================
 pub const MAIN_RS: &str = r#"#[macro_use] 
 extern crate rocket;
 
@@ -69,7 +67,6 @@ fn rocket() -> _ {
 }
 "#;
 
-// ==================== catchers/mod.rs ====================
 pub const CATCHERS: &str = r#"use rocket::catch;
 
 #[catch(400)]
@@ -148,7 +145,6 @@ pub async fn gateway_timeout() -> &'static str {
 }
 "#;
 
-// ==================== models/mod.rs ====================
 pub const MODELS: &str = r#"use chrono::{DateTime, Utc};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -209,7 +205,6 @@ pub struct ErrorResponse {
 }
 "#;
 
-// ==================== options/mod.rs ====================
 pub const OPTIONS: &str = r#"
 #[rocket::options("/<_route_args..>")]
 pub async fn options(_route_args: Option<std::path::PathBuf>) -> rocket::http::Status {
@@ -217,7 +212,6 @@ pub async fn options(_route_args: Option<std::path::PathBuf>) -> rocket::http::S
 }
 "#;
 
-// ==================== API routes | routes/mod.rs ====================
 pub const ROUTES_MOD: &str = r#"use crate::auth::{authorize_user, hash_password};
 use crate::guards::AuthClaims;
 use crate::models::{ErrorResponse, SuccessResponse, UserInfo};
@@ -526,7 +520,6 @@ pub fn user_routes() -> Vec<rocket::Route> {
 }
 "#;
 
-// ==================== DB.RS ====================
 pub const DB: &str = r#"use dotenvy::dotenv;
 use rbatis::RBatis;
 use rbdc_pg::driver::PgDriver;
@@ -560,7 +553,6 @@ async fn connect() -> Result<Arc<UserRepository>, rbatis::Error> {
 }
 "#;
 
-// ==================== REPOSITORIES.RS ====================
 pub const REPOSITORIES: &str = r#"use crate::models::UserEntity;
 use chrono::Utc;
 use rbatis::{raw_sql, RBatis};
@@ -708,7 +700,6 @@ impl UserRepository {
 }
 "#;
 
-// ==================== SQL migrations ====================
 pub const MIGRATIONS: &str = r#"-- Create users table migration
 -- File: migrations/001_create_users_table.sql
 
@@ -726,7 +717,6 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);
 "#;
 
-// ==================== .env content ====================
 pub const ENV_TEMPLATE: &str = r#"# Database Configuration
 #--------------------------------------
 # Database Configuration
