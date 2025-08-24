@@ -1,6 +1,6 @@
 # 🚀 rocket-cli
 
-[Preview]!(https://github.com/irfanghat/rocket-cli/blob/master/preview.png?raw=true)
+![Preview](https://github.com/irfanghat/rocket-cli/blob/master/preview.png?raw=true)
 
 A fast, ergonomic command-line interface (CLI) for scaffolding and running [Rocket](https://rocket.rs) web applications in Rust.  
 Spin up production-ready APIs in seconds with idiomatic project structure and database-backed templates.
