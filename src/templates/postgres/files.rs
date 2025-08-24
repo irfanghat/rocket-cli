@@ -1,4 +1,4 @@
-// ==================== CARGO.TOML ====================
+// ==================== cargo.toml ====================
 pub const CARGO_TOML: &str = r#"[package]
 name = "{{project_name}}"
 version = "0.1.0"
@@ -24,7 +24,7 @@ rbdc-pg = "4.6"
 rbs = "4.6"
 "#;
 
-// ==================== MAIN.RS ====================
+// ==================== main.rs ====================
 pub const MAIN_RS: &str = r#"#[macro_use] 
 extern crate rocket;
 
@@ -69,7 +69,7 @@ fn rocket() -> _ {
 }
 "#;
 
-// ==================== CATCHERS.RS ====================
+// ==================== catchers/mod.rs ====================
 pub const CATCHERS: &str = r#"use rocket::catch;
 
 #[catch(400)]
@@ -148,13 +148,13 @@ pub async fn gateway_timeout() -> &'static str {
 }
 "#;
 
-// ==================== MODELS.RS ====================
+// ==================== models/mod.rs ====================
 pub const MODELS: &str = r#"use chrono::{DateTime, Utc};
-use rbatis::rbdc::DateTime as RbatisDateTime;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// Database entity struct
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserEntity {
     pub id: Uuid,
@@ -164,11 +164,7 @@ pub struct UserEntity {
     pub created_at: DateTime<Utc>,
 }
 
-impl_select!(UserEntity{id,username,email,password,created_at}, "users");
-impl_insert!(UserEntity{username,email,password,created_at}, "users");
-impl_update!(UserEntity{username,email,password}, "users", "id = ?");
-impl_delete!(UserEntity{}, "users", "id = ?");
-
+/// DTO with password included
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct User {
     pub id: String,
@@ -178,6 +174,7 @@ pub struct User {
     pub created_at: String,
 }
 
+/// DTO without password
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct UserInfo {
     pub id: String,
@@ -212,7 +209,7 @@ pub struct ErrorResponse {
 }
 "#;
 
-// ==================== OPTIONS.RS ====================
+// ==================== options/mod.rs ====================
 pub const OPTIONS: &str = r#"
 #[rocket::options("/<_route_args..>")]
 pub async fn options(_route_args: Option<std::path::PathBuf>) -> rocket::http::Status {
@@ -220,7 +217,7 @@ pub async fn options(_route_args: Option<std::path::PathBuf>) -> rocket::http::S
 }
 "#;
 
-// ==================== ROUTES.RS ====================
+// ==================== API routes | routes/mod.rs ====================
 pub const ROUTES_MOD: &str = r#"use crate::auth::{authorize_user, hash_password};
 use crate::guards::AuthClaims;
 use crate::models::{ErrorResponse, SuccessResponse, UserInfo};
@@ -338,7 +335,7 @@ pub async fn login(
 /// Logs out the current user by removing the authentication cookie.
 #[post("/logout")]
 pub fn logout(cookies: &CookieJar<'_>) -> Json<SuccessResponse> {
-    cookies.remove(Cookie::build(("auth_token", "")).path("/").finish());
+    cookies.remove(Cookie::build(("auth_token", "")).path("/").build());
     Json(SuccessResponse {
         status: 200,
         message: "Logged out successfully".to_string(),
@@ -531,7 +528,7 @@ pub fn user_routes() -> Vec<rocket::Route> {
 
 // ==================== DB.RS ====================
 pub const DB: &str = r#"use dotenvy::dotenv;
-use rbatis::Rbatis;
+use rbatis::RBatis;
 use rbdc_pg::driver::PgDriver;
 use rocket::fairing::AdHoc;
 use std::sync::Arc;
@@ -555,41 +552,46 @@ pub fn init() -> AdHoc {
 async fn connect() -> Result<Arc<UserRepository>, rbatis::Error> {
     dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set...");
-    
-    let rb = Rbatis::new();
-    rb.link(&PgDriver {}, &database_url).await?;
-    
+
+    let rb = RBatis::new();
+    rb.link(PgDriver {}, &database_url).await?;
+
     Ok(Arc::new(UserRepository::new(rb)))
 }
 "#;
 
 // ==================== REPOSITORIES.RS ====================
-pub const REPOSITORIES: &str = r#"use chrono::Utc;
-use rbatis::rbdc::Error as RbdcError;
-use rbatis::Rbatis;
+pub const REPOSITORIES: &str = r#"use crate::models::UserEntity;
+use chrono::Utc;
+use rbatis::{raw_sql, RBatis};
 use uuid::Uuid;
 
-use crate::models::UserEntity;
-
-#[derive(Debug)]
 pub struct UserRepository {
-    rb: Rbatis,
+    rb: RBatis,
 }
 
 impl UserRepository {
-    pub fn new(rb: Rbatis) -> Self {
+    pub fn new(rb: RBatis) -> Self {
         Self { rb }
     }
 
-    /// CREATE a new user
+    //----------------------------------
+    // Create a new user
+    //----------------------------------
+    raw_sql!(insert_user(rb: &RBatis, user: &UserEntity) -> rbatis::rbdc::db::ExecResult =>
+        "INSERT INTO users (id, username, email, password, created_at) VALUES (?, ?, ?, ?, ?)"
+    );
+
     pub async fn create_user(
         &self,
         username: &str,
         email: &str,
         password: &str,
     ) -> Result<UserEntity, rbatis::Error> {
-        // Check if user already exists
-        if let Ok(Some(_)) = self.get_user_by_email(email).await {
+        //-------------------------------------------
+        // Check for existing user
+        //-------------------------------------------
+        if let Some(_) = self.get_user_by_email(email).await? {
             return Err(rbatis::Error::from("A user with this email already exists"));
         }
 
@@ -601,23 +603,48 @@ impl UserRepository {
             created_at: Utc::now(),
         };
 
-        UserEntity::insert(&self.rb, &user).await?;
+        Self::insert_user(&self.rb, &user).await?;
         Ok(user)
     }
 
-    /// GET user by id
+    //----------------------------------------------
+    // Get user by id
+    //----------------------------------------------
+    raw_sql!(get_by_id(rb: &RBatis, id: Uuid) -> Option<UserEntity> =>
+        "SELECT id, username, email, password, created_at FROM users WHERE id = ?"
+    );
+
     pub async fn get_user_by_id(&self, id: Uuid) -> Result<Option<UserEntity>, rbatis::Error> {
-        let users = UserEntity::select_by_column(&self.rb, "id", id).await?;
-        Ok(users.into_iter().next())
+        Self::get_by_id(&self.rb, id).await
     }
 
-    /// GET user by email
-    pub async fn get_user_by_email(&self, email: &str) -> Result<Option<UserEntity>, rbatis::Error> {
-        let users = UserEntity::select_by_column(&self.rb, "email", email).await?;
-        Ok(users.into_iter().next())
+    //-------------------------------------------------
+    // Get user by email
+    //-------------------------------------------------
+    raw_sql!(get_by_email(rb: &RBatis, email: &str) -> Option<UserEntity> =>
+        "SELECT id, username, email, password, created_at FROM users WHERE email = ?"
+    );
+
+    pub async fn get_user_by_email(
+        &self,
+        email: &str,
+    ) -> Result<Option<UserEntity>, rbatis::Error> {
+        Self::get_by_email(&self.rb, email).await
     }
 
-    /// UPDATE a user
+    //----------------------------------
+    // Update user
+    //----------------------------------
+    raw_sql!(update_user_sql(
+        rb: &RBatis,
+        id: Uuid,
+        username: &str,
+        email: &str,
+        password: &str
+    ) -> rbatis::rbdc::db::ExecResult =>
+        "UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?"
+    );
+
     pub async fn update_user(
         &self,
         id: Uuid,
@@ -625,47 +652,63 @@ impl UserRepository {
         email: Option<&str>,
         password: Option<&str>,
     ) -> Result<Option<UserEntity>, rbatis::Error> {
-        // First check if user exists
         let mut user = match self.get_user_by_id(id).await? {
-            Some(user) => user,
+            Some(u) => u,
             None => return Ok(None),
         };
 
-        // Update fields if provided
-        if let Some(username) = username {
-            user.username = username.to_string();
+        if let Some(u) = username {
+            user.username = u.to_string();
         }
-        if let Some(email) = email {
-            user.email = email.to_string();
+        if let Some(e) = email {
+            user.email = e.to_string();
         }
-        if let Some(password) = password {
-            user.password = password.to_string();
+        if let Some(p) = password {
+            user.password = p.to_string();
         }
 
-        UserEntity::update_by_column(&self.rb, &user, "id").await?;
+        Self::update_user_sql(
+            &self.rb,
+            user.id,
+            &user.username,
+            &user.email,
+            &user.password,
+        )
+        .await?;
+
         Ok(Some(user))
     }
 
-    /// DELETE a user
+    //-------------------------
+    // Delete user
+    //-------------------------
+    raw_sql!(delete_user_sql(rb: &RBatis, id: Uuid) -> rbatis::rbdc::db::ExecResult =>
+        "DELETE FROM users WHERE id = ?"
+    );
+
     pub async fn delete_user(&self, id: Uuid) -> Result<Option<UserEntity>, rbatis::Error> {
-        // First get the user to return it
-        let user = match self.get_user_by_id(id).await? {
-            Some(user) => user,
-            None => return Ok(None),
-        };
-
-        UserEntity::delete_by_column(&self.rb, "id", id).await?;
-        Ok(Some(user))
+        if let Some(user) = self.get_user_by_id(id).await? {
+            Self::delete_user_sql(&self.rb, id).await?;
+            Ok(Some(user))
+        } else {
+            Ok(None)
+        }
     }
 
-    /// GET all users
+    //--------------------------------------
+    // List all users
+    //--------------------------------------
+    raw_sql!(list_users_sql(rb: &RBatis) -> Vec<UserEntity> =>
+        "SELECT id, username, email, password, created_at FROM users"
+    );
+
     pub async fn list_users(&self) -> Result<Vec<UserEntity>, rbatis::Error> {
-        UserEntity::select_all(&self.rb).await
+        Self::list_users_sql(&self.rb).await
     }
 }
 "#;
 
-// ==================== SQL MIGRATIONS ====================
+// ==================== SQL migrations ====================
 pub const MIGRATIONS: &str = r#"-- Create users table migration
 -- File: migrations/001_create_users_table.sql
 
@@ -683,14 +726,22 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);
 "#;
 
-// ==================== .ENV TEMPLATE ====================
+// ==================== .env content ====================
 pub const ENV_TEMPLATE: &str = r#"# Database Configuration
-DATABASE_URL=postgresql://username:password@localhost/database_name
+#--------------------------------------
+# Database Configuration
+#--------------------------------------
+DATABASE_URL=postgresql://postgres:mysecretpassword@localhost/postgres
 
-# JWT Secret (generate a secure random string)
+#--------------------------------------
+# Generate a secure random string
+# openssl rand 32 -base64
+#--------------------------------------
 JWT_SECRET=your-super-secret-jwt-key-here
 
+#--------------------------------------
 # App Configuration
+#--------------------------------------
 ROCKET_PORT=8000
 ROCKET_ADDRESS=0.0.0.0
 "#;

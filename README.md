@@ -1,30 +1,28 @@
 # 🚀 rocket-cli
 
-A command-line interface (CLI) for developing, building, and running [Rocket](https://rocket.rs) web applications in Rust.  
-Scaffold production-ready APIs in seconds with idiomatic folder structure and database-ready templates.
-
----
+A fast, ergonomic command-line interface (CLI) for scaffolding and running [Rocket](https://rocket.rs) web applications in Rust.  
+Spin up production-ready APIs in seconds with idiomatic project structure and database-backed templates.
 
 ## Features
 
-- 🔧 `rocket new` to scaffold new Rocket projects
-- 📦 Multiple templates: `minimal` (default), `mongodb`, `postgres`, `mysql`, `mssql`, `sqlite`, and more via `rbatis`
-- 📂 Standard project layout (routes, db, middleware, etc.)
-- 💡 Intuitive command design inspired by the `dotnet` CLI
-- 🛠️ Git integration (`--git`)
-- ✅ Cross-platform and built in pure Rust
-
----
+- `rocket new` — scaffold a new Rocket project
+- Built-in templates:  
+  - `minimal` (default)  
+  - `mongodb`, `postgres`, `mysql`, `mssql`, `sqlite` (via [rbatis](https://github.com/rbatis/rbatis))  
+- Standard project layout (routes, db, repositories, middleware, fairings)  
+- Intuitive UX inspired by the `dotnet` CLI  
+- Optional Git initialization (`--git`)  
+- Cross-platform, written entirely in Rust  
 
 ## Installation
 
-### Install via Cargo
+### Install from source
 
 ```bash
 cargo install --path .
 ```
 
-### Clone & Build Locally
+### Clone & build
 
 ```bash
 git clone https://github.com/irfanghat/rocket-cli
@@ -32,30 +30,26 @@ cd rocket-cli
 cargo build --release
 ```
 
-### Download Precompiled Binary
+### Precompiled binaries
 
-Download the latest binary from [GitHub Releases](https://github.com/irfanghat/rocket-cli/releases):
+Grab the latest binaries from [GitHub Releases](https://github.com/irfanghat/rocket-cli/releases):
 
-1. Go to the [Releases page](https://github.com/irfanghat/rocket-cli/releases)
-2. Download the binary for your platform:
+* `rocket-cli-x86_64-unknown-linux-gnu`
+* `rocket-cli-x86_64-pc-windows-msvc.exe` (via WSL/Windows soon)
+* `rocket-cli-aarch64-apple-darwin` (macOS ARM soon)
 
-   * `rocket-cli-x86_64-unknown-linux-gnu`
-   * `rocket-cli-x86_64-pc-windows-msvc.exe` (Coming soon/Available via WSL)
-   * `rocket-cli-aarch64-apple-darwin` (macOS ARM - Coming soon)
-3. Make it executable (Linux/macOS):
+Install (Linux/macOS):
 
 ```bash
 chmod +x rocket-cli-*
 mv rocket-cli-* /usr/local/bin/rocket-cli
 ```
 
-4. Verify installation:
+Verify:
 
 ```bash
 rocket-cli --version
 ```
-
----
 
 ## Usage
 
@@ -72,8 +66,8 @@ rocket-cli new my-api
 Options:
 
 ```bash
---template <name>   Choose a template: minimal, mongodb, postgres, mysql, mssql, rbatis
---git               Initialize a Git repository
+--template <name>   # minimal | mongodb | postgres | mysql | mssql | sqlite
+--git               # initialize a Git repository
 ```
 
 Example:
@@ -82,55 +76,45 @@ Example:
 rocket-cli new my-api --template postgres --git
 ```
 
-### Run your project
+### Run the project
 
 ```bash
 rocket-cli run
 ```
 
----
+## Project Layout
 
-## Project Layout (Standardized)
-
-Every template follows a production-grade folder structure:
+All templates follow a production-ready structure:
 
 ```
 my-api/
 ├── Cargo.toml
 ├── src/
-│   ├── main.rs         # App entrypoint
+│   ├── main.rs         # Application entrypoint
 │   ├── routes/         # Route handlers
-│   ├── db/             # DB config & connections
+│   ├── db/             # Database config & connections
 │   ├── repositories/   # Data access layer
 │   ├── middleware/     # Middleware & guards
 │   └── fairings/       # Fairings & launch hooks
 ```
 
----
+## Templates
 
-## 🧪 Templates
+* `minimal` — base Rocket app (default)
+* `mongodb` — Rocket + MongoDB
+* `postgres` — Rocket + PostgreSQL (via rbatis)
+* `mysql` — Rocket + MySQL (via rbatis)
+* `mssql` — Rocket + SQL Server (via rbatis)
+* `sqlite` — Rocket + SQLite (via rbatis)
 
-Supported templates:
+## Resources
 
-* `minimal` — Basic Rocket app (default)
-* `mongodb` — Rocket with `mongodb`
-* `postgres` — Rocket with `PostgreSQL` (WIP)
-* `mysql` — Rocket with `MySQL` (WIP)
-* `mssql` — Rocket with `SQL Server` (WIP)
-* `sqlite` — Rocket with `SQLite` (WIP)
-
----
-
-## Documentation
-
-* 🌐 [Rocket.rs Docs](https://rocket.rs)
-* 💻 [GitHub Repo](https://github.com/irfanghat/rocket-cli)
-
----
+* [Rocket.rs Documentation](https://rocket.rs)
+* [rocket-cli GitHub](https://github.com/irfanghat/rocket-cli)
 
 ## Contributing
 
-Contributions, templates, and suggestions are welcome!
+Contributions and new templates are always welcome.
 
 ```bash
 git clone https://github.com/irfanghat/rocket-cli
@@ -138,12 +122,10 @@ cd rocket-cli
 cargo run -- --help
 ```
 
----
-
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](LICENSE).
 
 ---
 
-Built with ❤️ and Rust — from the community, for the community.
+Built with ❤️ in Rust — for the community, by the community.

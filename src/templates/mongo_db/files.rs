@@ -332,7 +332,7 @@ pub async fn login(
 /// Logs out the current user by removing the authentication cookie.
 #[post("/logout")]
 pub fn logout(cookies: &CookieJar<'_>) -> Json<SuccessResponse> {
-    cookies.remove(Cookie::build(("auth_token", "")).path("/").finish());
+    cookies.remove(Cookie::build(("auth_token", "")).path("/").build());
     Json(SuccessResponse {
         status: 200,
         message: "Logged out successfully".to_string(),
