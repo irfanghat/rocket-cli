@@ -103,9 +103,9 @@ my-api/
 * `minimal` — base Rocket app (default)
 * `mongodb` — Rocket + MongoDB
 * `postgres` — Rocket + PostgreSQL (via rbatis)
-* `mysql` — Rocket + MySQL (via rbatis)
-* `mssql` — Rocket + SQL Server (via rbatis)
-* `sqlite` — Rocket + SQLite (via rbatis)
+* `mysql` — Rocket + MySQL (WIP)
+* `mssql` — Rocket + SQL Server (WIP)
+* `sqlite` — Rocket + SQLite (WIP)
 
 ## Resources
 
