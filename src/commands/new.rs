@@ -1,5 +1,5 @@
 use crate::commands::NewArgs;
-use crate::templates::get_template_files;
+use crate::templates::load_template_files;
 use colored::*;
 use handlebars::Handlebars;
 use std::collections::HashMap;
@@ -12,9 +12,9 @@ pub fn handle(args: NewArgs) {
         println!("  minimal     → Basic Rocket project with a single route [default]");
         println!("  mongodb     → Rocket + MongoDB integration");
         println!("  postgres    → Rocket + PostgreSQL");
-        println!("  mysql       → Rocket + MySQL");
-        println!("  mssql       → Rocket + SQL Server");
-        println!("  sqlite      → Rocket + SQLite");
+        println!("  mysql       → Rocket + MySQL (WIP)");
+        println!("  mssql       → Rocket + SQL Server (WIP)");
+        println!("  sqlite      → Rocket + SQLite (WIP)");
         println!("\nExample: rocket new my-app --template postgres --git");
         return;
     }
@@ -41,13 +41,13 @@ pub fn execute(name: String, git: bool, template: String) {
     if project_dir.exists() {
         eprintln!(
             "{}",
-            format!("Project directory '{}' already exists", name).yellow()
+            format!("Project directory '{}' already exists.", name).yellow()
         );
         std::process::exit(1);
     }
 
-    let template_files = get_template_files(&template).unwrap_or_else(|| {
-        eprintln!("{}", format!("Rocket Template '{}' not found", template).red());
+    let template_files = load_template_files(&template).unwrap_or_else(|| {
+        eprintln!("{}", format!("Rocket Template '{}' not found...", template).red());
         std::process::exit(1);
     });
 
@@ -60,10 +60,10 @@ pub fn execute(name: String, git: bool, template: String) {
         let full_path = project_dir.join(relative_path);
 
         if let Some(parent) = full_path.parent() {
-            fs::create_dir_all(parent).expect("Failed to create directories");
+            fs::create_dir_all(parent).expect("Failed to create directories...");
         }
 
-        fs::write(full_path, rendered).expect("Failed to write file");
+        fs::write(full_path, rendered).expect("Failed to write file...");
     }
 
     if git {
@@ -71,7 +71,7 @@ pub fn execute(name: String, git: bool, template: String) {
             .arg("init")
             .arg(&name)
             .status()
-            .expect("Failed to run git init");
+            .expect("Failed to initialize git...");
         println!("Git initialized.");
     }
 

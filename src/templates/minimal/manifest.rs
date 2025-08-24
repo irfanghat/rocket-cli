@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::templates::{common, minimal::files};
 
-pub fn get_files() -> Vec<(PathBuf, &'static str)> {
+pub fn load_template() -> Vec<(PathBuf, &'static str)> {
     vec![
         ("Cargo.toml".into(), files::CARGO_TOML),
         ("src/main.rs".into(), files::MAIN_RS),

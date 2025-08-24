@@ -22,18 +22,18 @@ fn main() {
 
     match cli.command {
         Some(cmd) => commands::handle_command(cmd),
-        None => print_welcome(),
+        None => default_message(),
     }
 }
 
-fn print_welcome() {
+fn default_message() {
     let is_tty = std::io::stdout().is_terminal();
 
     let rocket_art = r#"
          .
         / \
-       / _ \        🚀  Rocket CLI
-      | (_) |       ==========================================
+       / _ \        Rocket CLI
+      | (_) |       ==============================================
       |  _  |       A command-line interface (CLI) for developing, 
      /| (_) |\      building and running Rocket Web applications.
     | |     | |     Write fast, type-safe, secure web apps with
@@ -63,12 +63,12 @@ fn print_welcome() {
         println!("{}", "Docs & Links:".bold());
         println!(
             "  {}     {}",
-            "📘 Docs:".yellow(),
+            "Docs:".yellow(),
             "https://rocket.rs".underline()
         );
         println!(
             "  {}  {}",
-            "💻 GitHub:".yellow(),
+            "GitHub:".yellow(),
             "https://github.com/irfanghat/rocket-cli".underline()
         );
     } else {
@@ -80,7 +80,7 @@ fn print_welcome() {
 
         println!();
         println!("Docs & Links:");
-        println!("  📘 Docs:     https://rocket.rs");
-        println!("  💻 GitHub:   https://github.com/irfanghat/rocket-cli");
+        println!("  Docs:     https://rocket.rs");
+        println!("  GitHub:   https://github.com/irfanghat/rocket-cli");
     }
 }
